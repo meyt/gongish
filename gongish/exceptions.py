@@ -18,7 +18,7 @@ class HTTPStatus(Exception):
         if not self.__class__.__keep_body__:
             return
 
-        return traceback.format_exc() if debug else self.get_status()
+        return traceback.format_exc() if debug else self.status
 
 
 class HTTPKnownStatus(HTTPStatus):

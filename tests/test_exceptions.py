@@ -6,6 +6,7 @@ from gongish import (
     HTTPFound,
     HTTPMovedPermanently,
     HTTPNoContent,
+    HTTPNotFound,
     HTTPInternalServerError,
 )
 
@@ -57,3 +58,37 @@ def test_http_status():
 
     resp = testapp.post("/user", status=InvalidEmail.code)
     assert resp.status == "700 Invalid Email"
+
+
+def test_exception_on_production():
+
+    app = Application()
+    app.config.debug = False
+
+    @app.route("/")
+    def get():
+        raise HTTPNotFound("im not here")
+
+    @app.route("/empty")
+    def get():
+        raise HTTPNoContent("im empty")
+
+    testapp = webtest.TestApp(app)
+
+    resp = testapp.get("/", status=HTTPNotFound.code)
+    assert resp.status == "404 im not here"
+    assert resp.body == b"404 im not here"
+
+    resp = testapp.get("/empty", status=HTTPNoContent.code)
+    assert resp.status == "204 im empty"
+    assert resp.body == b""
+
+    app.config.debug = True
+
+    resp = testapp.get("/", status=HTTPNotFound.code)
+    assert resp.status == "404 im not here"
+    assert resp.body.decode().startswith("Traceback (")
+
+    resp = testapp.get("/empty", status=HTTPNoContent.code)
+    assert resp.status == "204 im empty"
+    assert resp.body == b""
