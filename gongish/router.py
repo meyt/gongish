@@ -55,7 +55,7 @@ class RouterMixin(ResponseFormattersMixin):
 
             # Set formatter
             func.__gongish_formatter__ = partial(
-                formatter or self.__default_formatter__, **kwargs
+                formatter or self.__class__.__default_formatter__, **kwargs
             )
 
             # Get parameters
