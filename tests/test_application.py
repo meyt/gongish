@@ -7,10 +7,10 @@ from gongish import Application
 
 def test_hooks():
     class MyApp(Application):
-        def begin_response(self):
+        def on_begin_response(self):
             self.response.headers["authorization"] = "fake-one"
 
-        def end_response(self):
+        def on_end_response(self):
             self.response_ended = True
 
     app = MyApp()

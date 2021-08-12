@@ -29,15 +29,15 @@ class RouterMixin(ResponseFormattersMixin):
         self.response = None
         self.routes = {}
 
-    def begin_request(self):
+    def on_begin_request(self):
         """ Hook """
         pass
 
-    def begin_response(self):
+    def on_begin_response(self):
         """ Hook """
         pass
 
-    def end_response(self):
+    def on_end_response(self):
         """ Hook """
         pass
 
@@ -113,7 +113,7 @@ class RouterMixin(ResponseFormattersMixin):
             exc_.status, list(self.response.headers.items()), exc_info
         )
 
-        self.end_response()  # hook
+        self.on_end_response()  # hook
 
         return body
 
@@ -166,7 +166,7 @@ class RouterMixin(ResponseFormattersMixin):
         """ Application WSGI entry """
         self.request = request = self.__request_factory__(environ)
         self.response = response = self.__response_factory__()
-        self.begin_request()  # hook
+        self.on_begin_request()  # hook
 
         try:
             # Call handler
@@ -180,7 +180,7 @@ class RouterMixin(ResponseFormattersMixin):
         except Exception as exc:
             return self.handle_exception(exc, start_response)
 
-        self.begin_response()  # hook
+        self.on_begin_response()  # hook
 
         # Cookies
         cookie = request.cookies.output()
@@ -192,5 +192,5 @@ class RouterMixin(ResponseFormattersMixin):
 
         start_response(response.status, list(response.headers.items()))
 
-        self.end_response()  # hook
+        self.on_end_response()  # hook
         return body

@@ -16,6 +16,8 @@ class Application(RouterMixin, ConfigurationMixin):
         ConfigurationMixin.__init__(self)
         RouterMixin.__init__(self)
 
+    def setup(self):  # pragma: nocover
+        raise NotImplementedError
+
     def shutdown(self):  # pragma: nocover
-        """ Hook """
-        pass
+        raise NotImplementedError
