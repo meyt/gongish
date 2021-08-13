@@ -116,7 +116,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
                 if firstchar == app.__route_argument_char__:
                     resource = ROUTE_ARG
 
-                elif firstchar == '*':
+                elif firstchar == "*":
                     resource = ROUTE_WILDCARD
 
                 if resource not in parent.keys():
