@@ -15,6 +15,7 @@ from .response_formatters import ResponseFormattersMixin
 
 ROUTE_VERB = 0
 ROUTE_ARG = 1
+ROUTE_WILDCARD = 2
 http_success = HTTPSuccess().status
 
 
@@ -110,9 +111,12 @@ class RouterMixin(ResponseFormattersMixin):
             resources = path.split("/")
             parent = app.routes
             for resource in resources:
-
-                if resource.startswith(app.__route_argument_char__):
+                firstchar = resource[:1]
+                if firstchar == app.__route_argument_char__:
                     resource = ROUTE_ARG
+
+                elif firstchar == '*':
+                    resource = ROUTE_WILDCARD
 
                 if resource not in parent.keys():
                     parent[resource] = {}
@@ -169,6 +173,13 @@ class RouterMixin(ResponseFormattersMixin):
                 # Extract arguments
                 route = route[ROUTE_ARG]
                 route_keys = route.keys()
+                route_args.append(resource)
+                steps += 1
+
+            elif ROUTE_WILDCARD in route_keys:
+                if ROUTE_WILDCARD in route:
+                    route = route[ROUTE_WILDCARD]
+                route_keys = (ROUTE_WILDCARD,)
                 route_args.append(resource)
                 steps += 1
 

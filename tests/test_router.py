@@ -57,6 +57,22 @@ def test_simple_route():
     def get(name):
         return name
 
+    @app.json("/wildcard1/*")
+    def get(*args):
+        return args
+
+    @app.json("/wildcard1/*")
+    def post(*args):
+        return args
+
+    @app.json("/wildcard1/wildcardinner/*")
+    def get(*args):
+        return args
+
+    @app.json("/wildcard2/wildcardinner/*")
+    def get(*args):
+        return args
+
     testapp = webtest.TestApp(app)
     resp = testapp.get("/")
     assert resp.text == "The Root"
@@ -98,6 +114,27 @@ def test_simple_route():
 
     resp = testapp.get("/no_annotation/john")
     assert resp.text == "john"
+
+    resp = testapp.get("/wildcard1/first")
+    assert resp.json == ["first"]
+
+    resp = testapp.get("/wildcard2/wildcardinner/first")
+    assert resp.json == ["first"]
+
+    resp = testapp.get("/wildcard1/wildcardinner/a/b/c/d/e/f/g/h")
+    assert resp.json == "a/b/c/d/e/f/g/h".split("/")
+
+    resp = testapp.get("/wildcard2/wildcardinner/a/b/c/d/e/f/g/h")
+    assert resp.json == "a/b/c/d/e/f/g/h".split("/")
+
+    resp = testapp.get("/wildcard1/a/b/c/d/e/f/g/h")
+    assert resp.json == "a/b/c/d/e/f/g/h".split("/")
+
+    resp = testapp.post_json("/wildcard1/first")
+    assert resp.json == ["first"]
+
+    resp = testapp.post_json("/wildcard1/a/b/c/d/e/f/g/h")
+    assert resp.json == "a/b/c/d/e/f/g/h".split("/")
 
     # Query string not existed
     assert Request({"REQUEST_METHOD": "GET"}).query == {}
