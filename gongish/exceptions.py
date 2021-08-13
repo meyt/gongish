@@ -6,19 +6,32 @@ from gongish.helpers import HeaderSet
 class HTTPStatus(Exception):
     code = None
     text = None
-    headers = HeaderSet()
     __keep_headers__ = False
     __keep_body__ = True
+
+    def __init__(self, *args: object) -> None:
+        self.headers = HeaderSet()
+        super().__init__(*args)
 
     @property
     def status(self):
         return f"{self.code} {self.text}"
 
-    def render(self, debug: bool) -> str:
+    def setup_response(self, app) -> str:
         if not self.__class__.__keep_body__:
-            return
+            app.response.body = None
+            app.response.type = None
+        else:
+            app.response.charset = "utf-8"
+            app.response.type = "text/plain"
+            app.response.body = (
+                traceback.format_exc() if app.config.debug else self.status
+            )
 
-        return traceback.format_exc() if debug else self.status
+        if self.__keep_headers__:
+            app.response.headers.update(self.headers)
+        else:
+            app.response.headers = self.headers
 
 
 class HTTPKnownStatus(HTTPStatus):
@@ -74,8 +87,8 @@ class HTTPRedirect(HTTPKnownStatus):
     """
 
     def __init__(self, location, *args, **kw):
-        self.headers["Location"] = location
         super().__init__(*args, **kw)
+        self.headers["Location"] = location
 
 
 class HTTPMovedPermanently(HTTPRedirect):

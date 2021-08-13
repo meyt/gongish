@@ -37,15 +37,19 @@ def test_http_status():
 
     resp = testapp.get("/no_content", status=HTTPNoContent.code)
     assert resp.headers["custom-one"] == "yes"
+    assert "content-type" not in resp.headers
 
     resp = testapp.get("/old_page", status=HTTPFound.code)
     assert resp.headers["location"] == "https://localhost/new_page"
+    assert "content-type" not in resp.headers
 
     resp = testapp.get("/old_user", status=HTTPMovedPermanently.code)
     assert resp.headers["location"] == "https://localhost/new_user"
+    assert "content-type" not in resp.headers
 
     resp = testapp.get("/oops", status=HTTPInternalServerError.code)
     assert resp.status == HTTPInternalServerError().status
+    assert resp.headers["content-type"] == "text/plain; charset=utf-8"
     assert "custom-one" not in resp.headers
 
     # Custom exception
@@ -82,6 +86,7 @@ def test_exception_on_production():
     resp = testapp.get("/empty", status=HTTPNoContent.code)
     assert resp.status == "204 im empty"
     assert resp.body == b""
+    assert "content-type" not in resp.headers
 
     app.config.debug = True
 
@@ -92,3 +97,4 @@ def test_exception_on_production():
     resp = testapp.get("/empty", status=HTTPNoContent.code)
     assert resp.status == "204 im empty"
     assert resp.body == b""
+    assert "content-type" not in resp.headers

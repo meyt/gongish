@@ -1,7 +1,6 @@
 import sys
 import inspect
-
-from functools import partial
+import functools
 
 from .request import Request
 from .response import Response
@@ -47,14 +46,14 @@ class RouterMixin(ResponseFormattersMixin):
 
     def __getattr__(self, key):
         formatter = super().__getattribute__(f"format_{key}")
-        return partial(self.route, formatter=formatter)
+        return functools.partial(self.route, formatter=formatter)
 
     def route(self, path, formatter=None, **kwargs):
         def decorator(func):
             app = self
 
             # Set formatter
-            func.__gongish_formatter__ = partial(
+            func.__gongish_formatter__ = functools.partial(
                 formatter or self.__class__.__default_formatter__, **kwargs
             )
 
@@ -96,26 +95,17 @@ class RouterMixin(ResponseFormattersMixin):
             exc_info = sys.exc_info()
             self.__logger__.exception(exc_.text, exc_info=True)
 
-        if exc_.__keep_headers__:
-            self.response.headers.update(exc_.headers)
-        else:
-            self.response.headers = exc_.headers
-
-        self.response.charset = "utf-8"
-        self.response.type = "plain/text"
-        self.response.body = exc_.render(debug=self.config.debug)
+        exc_.setup_response(app=self)
 
         self.on_error(exc_)  # hook
 
-        body = self.response.conclude()
+        self.response.prepare_to_start()
 
         start_response(
             exc_.status, list(self.response.headers.items()), exc_info
         )
 
-        self.on_end_response()  # hook
-
-        return body
+        return self.response.start()
 
     def dispatch(self, path: str, verb: str):
         """
@@ -165,7 +155,7 @@ class RouterMixin(ResponseFormattersMixin):
     def __call__(self, environ, start_response):
         """ Application WSGI entry """
         self.request = request = self.__request_factory__(environ)
-        self.response = response = self.__response_factory__()
+        self.response = response = self.__response_factory__(app=self)
         self.on_begin_request()  # hook
 
         try:
@@ -176,6 +166,8 @@ class RouterMixin(ResponseFormattersMixin):
 
             # Format response
             handler.__gongish_formatter__(request, response)
+
+            response.prepare_to_start()
 
         except Exception as exc:
             return self.handle_exception(exc, start_response)
@@ -188,9 +180,6 @@ class RouterMixin(ResponseFormattersMixin):
             for line in cookie.split("\r\n"):
                 response.headers.add(*line.split(": ", 1))
 
-        body = response.conclude()
-
         start_response(response.status, list(response.headers.items()))
 
-        self.on_end_response()  # hook
-        return body
+        return response.start()

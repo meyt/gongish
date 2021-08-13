@@ -1,56 +1,76 @@
+import types
 from .helpers import HeaderSet
 
 
 class Response:
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.headers = HeaderSet()
         self.status = "200 OK"
-        self.length = None
         self.body = None
-        self._type = None
-        self._charset = None
-
-    @property
-    def type(self):
-        return self._type
-
-    @type.setter
-    def type(self, val):
-        self._type = val
-        self.headers["content-type"] = self.contenttype
-
-    @property
-    def charset(self):
-        return self._charset
-
-    @charset.setter
-    def charset(self, val):
-        self._charset = val
-        self.headers["content-type"] = self.contenttype
+        self.type = None
+        self.charset = None
+        self.length = None
+        self._firstchunk = None
 
     @property
     def contenttype(self):
-        if not self._type:
+        if not self.type:
             return None
 
-        result = self._type
-        if self._charset:
-            result += f"; charset={self._charset}"
+        result = self.type
+        if self.charset:
+            result += f"; charset={self.charset}"
 
         return result
 
-    def conclude(self):
+    def prepare_to_start(self):
+        contenttype = self.contenttype
+        if contenttype:
+            self.headers["content-type"] = contenttype
+
         body = self.body
-        if body is None:
-            body = []
+        if isinstance(body, types.GeneratorType):
+            # Trying to get at least one element from the generator,
+            # to force the method call till the second
+            # `yield` statement
+            self._firstchunk = next(body)
+            if self.length is not None:
+                self.headers["content-length"] = str(self.length)
+        else:
+            if body is None:
+                body = []
 
-        elif isinstance(body, (str, bytes)):
-            body = [body]
+            elif isinstance(body, (str, bytes)):
+                body = [body]
 
-        if self.charset:
-            body = [i.encode(self.charset) for i in body]
+            if self.charset:
+                body = [i.encode(self.charset) for i in body]
 
-        if self.length is None:
-            self.length = sum(len(i) for i in body)
+            self.headers["content-length"] = str(
+                sum(len(i) for i in body)
+                if self.length is None
+                else self.length
+            )
+            self.body = body
 
-        return body
+    def startstream(self):
+        # encode if required
+        if self.charset and not isinstance(self._firstchunk, bytes):
+            yield self._firstchunk.encode(self.charset)
+            for chunk in self.body:
+                yield chunk.encode(self.charset)
+
+        else:
+            yield self._firstchunk
+            for chunk in self.body:
+                yield chunk
+
+        self.app.on_end_response()  # hook
+
+    def start(self):
+        if self._firstchunk is not None:
+            return self.startstream()
+
+        self.app.on_end_response()  # hook
+        return self.body

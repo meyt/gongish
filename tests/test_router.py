@@ -1,6 +1,7 @@
+import pytest
 import webtest
 
-from gongish import Application
+from gongish import Application, response
 from gongish.request import Request
 
 
@@ -100,3 +101,81 @@ def test_simple_route():
 
     # Query string not existed
     assert Request({"REQUEST_METHOD": "GET"}).query == {}
+
+
+def test_content_type():
+    app = Application()
+    testapp = webtest.TestApp(app)
+
+    @app.route("/")
+    def get():
+        return "The Root"
+
+    @app.text("/user")
+    def get():
+        return "The User"
+
+    @app.json("/user")
+    def post():
+        return dict(id="bla")
+
+    resp = testapp.get("/")
+    assert resp.text == "The Root"
+    assert resp.headers["content-type"] == "text/plain; charset=utf-8"
+
+    resp = testapp.get("/user")
+    assert resp.text == "The User"
+    assert resp.headers["content-type"] == "text/plain; charset=utf-8"
+
+    resp = testapp.post("/user")
+    assert resp.json == dict(id="bla")
+    assert resp.headers["content-type"] == "application/json; charset=utf-8"
+
+
+def test_stream():
+    app = Application()
+    testapp = webtest.TestApp(app)
+
+    @app.route("/")
+    def get():
+        yield "Foo"
+        yield "Bar"
+
+    @app.route("/haslength")
+    def get():
+        app.response.length = 6
+        yield "Foo"
+        yield "Bar"
+
+    @app.binary("/binary")
+    def get():
+        yield b"Foo"
+        yield b"Bar"
+
+    @app.route("/notype")
+    def get():
+        response.type
+        yield b"Foo"
+        yield b"Bar"
+
+    @app.route("/bad")
+    def get():
+        yield "Foo"
+        raise ValueError("something wrong")
+
+    resp = testapp.get("/")
+    assert resp.text == "FooBar"
+    assert resp.headers["content-type"] == "text/plain; charset=utf-8"
+
+    resp = testapp.get("/haslength")
+    assert resp.text == "FooBar"
+    assert resp.headers["content-type"] == "text/plain; charset=utf-8"
+    assert resp.headers["content-length"] == "6"
+
+    resp = testapp.get("/binary")
+    assert resp.body == b"FooBar"
+    assert resp.headers["content-type"] == "application/octet-stream"
+
+    # Headers already sent and cannot handle exception in HTTP
+    with pytest.raises(ValueError):
+        testapp.get("/bad")
