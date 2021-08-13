@@ -12,6 +12,7 @@ from .exceptions import (
     HTTPInternalServerError,
 )
 from .response_formatters import ResponseFormattersMixin
+from .static import StaticHandlerMixin
 
 ROUTE_VERB = 0
 ROUTE_ARG = 1
@@ -19,7 +20,7 @@ ROUTE_WILDCARD = 2
 http_success = HTTPSuccess().status
 
 
-class RouterMixin(ResponseFormattersMixin):
+class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     __request_factory__ = Request
     __response_factory__ = Response
     __route_argument_char__ = ":"

@@ -1,4 +1,11 @@
+import pytest
+
 from os.path import join, dirname
 
-this_dir = dirname(__file__)
-stuff_dir = join(this_dir, "stuff")
+_this_dir = dirname(__file__)
+_stuff_dir = join(_this_dir, "stuff")
+
+
+@pytest.fixture
+def stuff_dir():
+    return _stuff_dir
