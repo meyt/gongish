@@ -48,6 +48,47 @@ class RouterMixin(ResponseFormattersMixin):
         formatter = super().__getattribute__(f"format_{key}")
         return functools.partial(self.route, formatter=formatter)
 
+    def chunked(self, trailer_field=None, trailer_value=None):
+        """
+        http://tools.ietf.org/html/rfc2616#section-14.40
+        http://tools.ietf.org/html/rfc2616#section-14.41
+        """
+        app = self
+
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                nonlocal trailer_field, trailer_value, app
+                app.response.headers["transfer-encoding"] = "chunked"
+                if trailer_field:
+                    app.response.headers["trailer"] = trailer_field
+
+                result = func(*args, **kwargs)
+                try:
+                    while True:
+                        chunk = next(result)
+                        yield f"{len(chunk)}\r\n{chunk}\r\n"
+
+                except StopIteration:
+                    yield "0\r\n"
+                    if trailer_field and trailer_value:
+                        yield f"{trailer_field}: {trailer_value}\r\n"
+                    yield "\r\n"
+
+                except Exception as ex:
+                    exstr = str(ex)
+                    yield f"{len(exstr)}\r\n{exstr}"
+                    yield "0\r\n\r\n"
+
+            return wrapper
+
+        if callable(trailer_field):
+            func = trailer_field
+            trailer_field = None
+            return decorator(func)
+
+        return decorator
+
     def route(self, path, formatter=None, **kwargs):
         def decorator(func):
             app = self

@@ -1,7 +1,7 @@
 import pytest
 import webtest
 
-from gongish import Application, response
+from gongish import Application
 from gongish.request import Request
 
 
@@ -152,16 +152,28 @@ def test_stream():
         yield b"Foo"
         yield b"Bar"
 
-    @app.route("/notype")
-    def get():
-        response.type
-        yield b"Foo"
-        yield b"Bar"
-
     @app.route("/bad")
     def get():
         yield "Foo"
         raise ValueError("something wrong")
+
+    @app.route("/chunked")
+    @app.chunked
+    def get():
+        yield "first"
+        yield "second"
+
+    @app.route("/chunked_trailer")
+    @app.chunked("trailer1", "end")
+    def get():
+        yield "first"
+        yield "second"
+
+    @app.route("/bad_chunked")
+    @app.chunked
+    def get():
+        yield "first"
+        raise Exception("error in streaming")
 
     resp = testapp.get("/")
     assert resp.text == "FooBar"
@@ -179,3 +191,20 @@ def test_stream():
     # Headers already sent and cannot handle exception in HTTP
     with pytest.raises(ValueError):
         testapp.get("/bad")
+
+    resp = testapp.get("/chunked")
+    assert resp.headers["transfer-encoding"] == "chunked"
+    assert "trailer" not in resp.headers
+    assert resp.text == "5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n"
+
+    resp = testapp.get("/chunked_trailer")
+    assert resp.headers["transfer-encoding"] == "chunked"
+    assert resp.headers["trailer"] == "trailer1"
+    assert (
+        resp.text == "5\r\nfirst\r\n6\r\nsecond\r\n0\r\ntrailer1: end\r\n\r\n"
+    )
+
+    resp = testapp.get("/bad_chunked")
+    assert resp.headers["transfer-encoding"] == "chunked"
+    assert "trailer" not in resp.headers
+    assert resp.text == "5\r\nfirst\r\n18\r\nerror in streaming0\r\n\r\n"

@@ -36,6 +36,12 @@ def test_hooks():
         yield "First"
         yield "Second"
 
+    @app.route("/chunked")
+    @app.chunked
+    def get():
+        yield "First"
+        yield "Second"
+
     @app.route("/onerror")
     def get():
         raise Exception
@@ -55,11 +61,17 @@ def test_hooks():
     assert app.response_begin_counter == 2
     assert app.response_end_counter == 2
 
+    resp = testapp.get("/chunked")
+    assert resp.text == "5\r\nFirst\r\n6\r\nSecond\r\n0\r\n\r\n"
+    assert app.request_begin_counter == 3
+    assert app.response_begin_counter == 3
+    assert app.response_end_counter == 3
+
     testapp.get("/onerror", status=500)
     assert app.on_error_counter == 1
-    assert app.request_begin_counter == 3
-    assert app.response_begin_counter == 2
-    assert app.response_end_counter == 3
+    assert app.request_begin_counter == 4
+    assert app.response_begin_counter == 3
+    assert app.response_end_counter == 4
 
 
 def test_configuration():
