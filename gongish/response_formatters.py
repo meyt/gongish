@@ -10,7 +10,6 @@ class ResponseFormattersMixin:
         # Format in plain text
         response.type = "text/plain"
         response.charset = "utf-8"
-        response.body = str(response.body)
 
     @staticmethod
     def format_json(request, response, indent=None):
