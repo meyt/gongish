@@ -96,8 +96,7 @@ Methods for routing:
 
 1. Exact path
 
-
-```python
+    ```python
     @app.route('/')
     def get():
         return 'Index'
@@ -109,8 +108,7 @@ Methods for routing:
 
 2. Positional arguments
 
-
-```python
+    ```python
     @app.route('/user/:user_id')
     def get(user_id):
         return f'Hi {}'
@@ -121,9 +119,7 @@ Methods for routing:
     ```
 
 3. Wildcard
-
-
-```python
+    ```python
     @app.json('/user/*')
     def get(*args):
         return args
@@ -217,7 +213,7 @@ You can use Python Generators as route handler:
 @app.route('/')
 def get():
     yield 'First'
-    yield 'Second
+    yield 'Second'
 ```
 
 with HTTP chunked data transfer:
