@@ -12,7 +12,7 @@ def read_version(module_name):
 setup(
     name="gongish",
     version=read_version("gongish"),
-    description="A lightweight, extendable web backend library for python",
+    description="A simple and fast HTTP framework for Python",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="http://github.com/meyt/gongish",
@@ -29,5 +29,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Topic :: Software Development :: Libraries",
     ],
+    entry_points={"console_scripts": ["gongish = gongish.cli:main"]},
     install_requires=["pymlconf == 2.2.0"],
 )
