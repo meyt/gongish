@@ -209,9 +209,9 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         """ Application WSGI entry """
         self.request = request = self.__request_factory__(environ)
         self.response = response = self.__response_factory__(app=self)
-        self.on_begin_request()  # hook
-
         try:
+            self.on_begin_request()  # hook
+
             # Call handler
             handler, route_args = self.dispatch(request.path, request.verb)
             response.body = handler(*route_args)

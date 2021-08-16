@@ -1,8 +1,9 @@
+import pytest
 import webtest
 import tempfile
 
 from os.path import join
-from gongish import Application
+from gongish import Application, HTTPNotFound
 
 
 def test_hooks():
@@ -15,9 +16,21 @@ def test_hooks():
         def on_begin_request(self):
             self.request_begin_counter += 1
 
+            if "x-wrongreq" in self.request.headers:
+                raise HTTPNotFound
+
+            if "x-brokenreq" in self.request.headers:
+                raise ValueError
+
         def on_begin_response(self):
             self.response.headers["authorization"] = "fake-one"
             self.response_begin_counter += 1
+
+            if "x-wrongres" in self.request.headers:
+                raise HTTPNotFound
+
+            if "x-brokenres" in self.request.headers:
+                raise ValueError
 
         def on_end_response(self):
             self.response_end_counter += 1
@@ -72,6 +85,25 @@ def test_hooks():
     assert app.request_begin_counter == 4
     assert app.response_begin_counter == 3
     assert app.response_end_counter == 4
+
+    # Handle error on hooks
+    testapp.get("/tom", headers={"x-wrongreq": "1"}, status=404)
+    assert app.on_error_counter == 2
+    assert app.request_begin_counter == 5
+    assert app.response_begin_counter == 3
+    assert app.response_end_counter == 5
+
+    testapp.get("/tom", headers={"x-brokenreq": "1"}, status=500)
+    assert app.on_error_counter == 3
+    assert app.request_begin_counter == 6
+    assert app.response_begin_counter == 3
+    assert app.response_end_counter == 6
+
+    with pytest.raises(HTTPNotFound):
+        testapp.get("/tom", headers={"x-wrongres": "1"})
+
+    with pytest.raises(ValueError):
+        testapp.get("/tom", headers={"x-brokenres": "1"})
 
 
 def test_configuration():
