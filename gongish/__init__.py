@@ -1,5 +1,3 @@
-__version__ = "0.3.0"
-
 from .exceptions import (
     HTTPStatus,
     HTTPBadRequest,
@@ -24,3 +22,29 @@ from .exceptions import (
     HTTPKnownStatus,
 )
 from .application import Application
+
+__version__ = "0.3.1"
+__all__ = (
+    HTTPStatus,
+    HTTPBadRequest,
+    HTTPUnauthorized,
+    HTTPForbidden,
+    HTTPNotFound,
+    HTTPMethodNotAllowed,
+    HTTPConflict,
+    HTTPGone,
+    HTTPRedirect,
+    HTTPMovedPermanently,
+    HTTPFound,
+    HTTPInternalServerError,
+    HTTPNotModified,
+    HTTPBadGatewayError,
+    HTTPCreated,
+    HTTPAccepted,
+    HTTPNonAuthoritativeInformation,
+    HTTPNoContent,
+    HTTPResetContent,
+    HTTPPartialContent,
+    HTTPKnownStatus,
+    Application,
+)
