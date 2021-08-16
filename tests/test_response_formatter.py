@@ -13,10 +13,32 @@ def test_default_formatter():
     def get():
         return dict(a=1)
 
+    @app.route("/none")
+    def get():
+        return
+
+    @app.route("/int")
+    def get():
+        return 12
+
+    @app.route("/str")
+    def get():
+        return 'thestr'
+
     testapp = webtest.TestApp(app)
+
     resp = testapp.get("/")
     assert resp.json == dict(a=1)
     assert resp.status == "200 OK"
+
+    resp = testapp.get("/none")
+    assert resp.json is None
+
+    resp = testapp.get("/int")
+    assert resp.json == 12
+
+    resp = testapp.get("/str")
+    assert resp.json == 'thestr'
 
 
 def test_text_formatter():

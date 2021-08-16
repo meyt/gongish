@@ -1,7 +1,18 @@
 try:
     import ujson as jsonlib
+
+    def dump_json(v, indent):
+        # ujson 4.x patch
+        # https://github.com/ultrajson/ultrajson/issues/317
+        if indent is None:
+            indent = 0
+        return jsonlib.dumps(v, indent=indent)
+
+
 except ImportError:  # pragma: no cover
     import json as jsonlib
+
+    dump_json = jsonlib.dumps
 
 
 class ResponseFormattersMixin:
@@ -16,7 +27,7 @@ class ResponseFormattersMixin:
         # Format in JSON
         response.type = "application/json"
         response.charset = "utf-8"
-        response.body = jsonlib.dumps(response.body, indent=indent)
+        response.body = dump_json(response.body, indent=indent)
 
     @staticmethod
     def format_binary(request, response):
