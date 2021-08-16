@@ -1,5 +1,5 @@
+import webtest
 from os.path import join
-from webtest import TestApp
 from gongish import Application
 
 
@@ -12,7 +12,7 @@ def test_static(stuff_dir):
     def get():
         return "The Root"
 
-    testapp = TestApp(app)
+    testapp = webtest.TestApp(app)
 
     resp = testapp.get("/")
     assert resp.text == "The Root"
