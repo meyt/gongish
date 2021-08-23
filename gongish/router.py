@@ -28,7 +28,9 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     def __init__(self):
         self.request = None
         self.response = None
-        self.routes = {}
+        self.verbs = set()
+        self.paths = set()
+        self.routes = dict()
 
     def on_begin_request(self):
         """ Hook """
@@ -94,6 +96,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     def route(self, path, formatter=None, **kwargs):
         def decorator(func):
             app = self
+            funcname = func.__name__.lower()
 
             # Set formatter
             func.__gongish_formatter__ = functools.partial(
@@ -125,9 +128,12 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
                 parent = parent[resource]
 
             if ROUTE_VERB not in parent.keys():
-                parent[ROUTE_VERB] = {func.__name__: func}
+                parent[ROUTE_VERB] = {funcname: func}
             else:
-                parent[ROUTE_VERB][func.__name__] = func
+                parent[ROUTE_VERB][funcname] = func
+
+            self.paths.add(path)
+            self.verbs.add(funcname)
 
         return decorator
 

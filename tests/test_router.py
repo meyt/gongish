@@ -14,11 +14,11 @@ def test_simple_route():
         return "The Root"
 
     @app.route("/user")
-    def get():
+    def GET():
         return "User Route"
 
     @app.route("/user")
-    def post():
+    def POST():
         return "User Route Post"
 
     @app.route("/user/:userid")
