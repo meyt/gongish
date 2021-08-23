@@ -23,7 +23,7 @@ from .exceptions import (
 )
 from .application import Application
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __all__ = (
     HTTPStatus,
     HTTPBadRequest,
