@@ -13,10 +13,8 @@ from .exceptions import (
 )
 from .response_formatters import ResponseFormattersMixin
 from .static import StaticHandlerMixin
+from .helpers import WordRouter
 
-ROUTE_VERB = 0
-ROUTE_ARG = 1
-ROUTE_WILDCARD = 2
 http_success = HTTPSuccess().status
 
 
@@ -30,7 +28,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         self.response = None
         self.verbs = set()
         self.paths = set()
-        self.routes = dict()
+        self.wordrouter = WordRouter()
 
     def on_begin_request(self):
         """ Hook """
@@ -95,7 +93,6 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
     def route(self, path, formatter=None, **kwargs):
         def decorator(func):
-            app = self
             funcname = func.__name__.lower()
 
             # Set formatter
@@ -112,26 +109,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
             )
 
             # Distribute
-            resources = path.split("/")
-            parent = app.routes
-            for resource in resources:
-                firstchar = resource[:1]
-                if firstchar == app.__route_argument_char__:
-                    resource = ROUTE_ARG
-
-                elif firstchar == "*":
-                    resource = ROUTE_WILDCARD
-
-                if resource not in parent.keys():
-                    parent[resource] = {}
-
-                parent = parent[resource]
-
-            if ROUTE_VERB not in parent.keys():
-                parent[ROUTE_VERB] = {funcname: func}
-            else:
-                parent[ROUTE_VERB][funcname] = func
-
+            self.wordrouter.add(funcname + path, func)
             self.paths.add(path)
             self.verbs.add(funcname)
 
@@ -164,36 +142,9 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         Dispatch path and return handler function
         """
 
-        # Split path
-        resources = path.split("/")
-        route = self.routes
-        route_keys = route.keys()
-        route_args = []
-        steps = 0
-        for resource in resources:
-            if resource in route_keys:
-                route = route[resource]
-                route_keys = route.keys()
-                steps += 1
-
-            elif ROUTE_ARG in route_keys:
-                # Extract arguments
-                route = route[ROUTE_ARG]
-                route_keys = route.keys()
-                route_args.append(resource)
-                steps += 1
-
-            elif ROUTE_WILDCARD in route_keys:
-                if ROUTE_WILDCARD in route:
-                    route = route[ROUTE_WILDCARD]
-                route_keys = (ROUTE_WILDCARD,)
-                route_args.append(resource)
-                steps += 1
-
-        if steps != len(resources) or verb not in route[ROUTE_VERB].keys():
+        handler, route_args = self.wordrouter.dispatch(verb + path)
+        if not handler:
             raise HTTPNotFound
-
-        handler = route[ROUTE_VERB][verb]
 
         # Validate parameters
         for idx, param in enumerate(handler.__gongish_route_params__):

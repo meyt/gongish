@@ -17,6 +17,10 @@ def test_simple_route():
     def GET():
         return "User Route"
 
+    @app.route("/user/me")
+    def get():
+        return "Its me"
+
     @app.route("/user")
     def POST():
         return "User Route Post"
@@ -88,6 +92,17 @@ def test_simple_route():
 
     resp = testapp.delete("/user/4")
     assert resp.text == "Delete User 4"
+    assert resp.status == "200 OK"
+
+    resp = testapp.delete("/user/me", status=400)
+    assert resp.status == "400 Invalid Parameter `userid`"
+
+    resp = testapp.delete("/user/13")
+    assert resp.text == "Delete User 13"
+    assert resp.status == "200 OK"
+
+    resp = testapp.get("/user/me")
+    assert resp.text == "Its me"
     assert resp.status == "200 OK"
 
     resp = testapp.get("/user/email/x@site.com/book")

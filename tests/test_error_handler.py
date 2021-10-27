@@ -30,6 +30,7 @@ def test_error_handler():
         def on_error(self, exc):
             import json
             import traceback
+
             response = self.response
             response.charset = "utf-8"
             response.type = "application/json"
@@ -43,5 +44,5 @@ def test_error_handler():
 
     testapp = webtest.TestApp(app)
     resp = testapp.get("/", status=404)
-    assert 'traceback' in resp.json.keys()
+    assert "traceback" in resp.json.keys()
     assert resp.status == "404 Not Found"
