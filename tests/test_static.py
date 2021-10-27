@@ -1,3 +1,4 @@
+import os
 import webtest
 from os.path import join
 from gongish import Application
@@ -7,6 +8,9 @@ def test_static(stuff_dir):
     app = Application()
     app.add_static("/public", stuff_dir)
     app.add_static("/lost", join(stuff_dir, "lost"))
+
+    os.utime(join(stuff_dir, "index.html"), (1602179630, 1602179635))
+    os.utime(join(stuff_dir, "img1.png"), (1602179640, 1602179645))
 
     @app.route("/")
     def get():
@@ -26,12 +30,12 @@ def test_static(stuff_dir):
     resp = testapp.get("/public/index.html")
     assert resp.text == "<h1>Hi!</h1>"
     assert resp.headers["content-type"] == "text/html"
-    assert resp.headers["last-modified"] == "Fri, 13 Aug 2021 14:16:44 GMT"
+    assert resp.headers["last-modified"] == "Thu, 08 Oct 2020 17:53:55 GMT"
 
     resp = testapp.get("/public/img1.png")
     assert len(resp.body) == 72332
     assert resp.headers["content-type"] == "image/png"
-    assert resp.headers["last-modified"] == "Sun, 02 Feb 2020 04:51:41 GMT"
+    assert resp.headers["last-modified"] == "Thu, 08 Oct 2020 17:54:05 GMT"
 
     testapp.get("/lost", status=404)
     testapp.get("/public/img1.jpg", status=404)
