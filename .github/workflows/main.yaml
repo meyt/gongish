@@ -19,9 +19,9 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install setuptools wheel twine
-          python3 -m pip -r requirements-dev.txt
-          python3 -m pip --upgrade pytest
-          python3 -m pip -ve .
+          python3 -m pip install -r requirements-dev.txt
+          python3 -m pip install --upgrade pytest
+          python3 -m pip install -ve .
 
       - name: Test
         run: |
