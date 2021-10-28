@@ -32,6 +32,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: Build Package
+        run: python3 setup.py sdist bdist_wheel
+
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
