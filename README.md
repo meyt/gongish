@@ -1,5 +1,9 @@
 # gongish
 
+[![Python Versions](https://img.shields.io/pypi/pyversions/gongish.svg)](https://pypi.python.org/pypi/gongish)
+![Build Status](https://github.com/meyt/gongish/actions/workflows/main.yaml/badge.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/meyt/gongish/badge.svg?branch=master)](https://coveralls.io/github/meyt/gongish?branch=master)
+
 A simple and fast HTTP framework for Python.
 
 ```python
