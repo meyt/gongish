@@ -25,7 +25,7 @@ jobs:
 
       - name: Test
         run: |
-          py.test -vv --cov-report term-missing:skip-covered --cov=gongish gongish
+          py.test -vv --cov-report term-missing:skip-covered --cov=gongish
           coveralls
 
       - name: Coveralls
