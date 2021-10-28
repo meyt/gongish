@@ -26,7 +26,6 @@ jobs:
       - name: Test
         run: |
           py.test -vv --cov-report term-missing:skip-covered --cov=gongish
-          coveralls
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
