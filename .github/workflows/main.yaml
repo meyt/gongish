@@ -28,11 +28,9 @@ jobs:
           py.test -vv --cov-report term-missing:skip-covered --cov=gongish
 
       - name: Coveralls
-        uses: coverallsapp/github-action@master
+        run: coveralls
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
