@@ -1,0 +1,40 @@
+name: Test & Upload to TestPyPI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel twine
+          python3 -m pip -r requirements-dev.txt
+          python3 -m pip --upgrade pytest
+          python3 -m pip -ve .
+
+      - name: Test
+        run: |
+          py.test -vv --cov-report term-missing:skip-covered --cov=gongish gongish
+          coveralls
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
