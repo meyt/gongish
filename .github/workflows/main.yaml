@@ -28,7 +28,7 @@ jobs:
           py.test -vv --cov-report term-missing:skip-covered --cov=gongish
 
       - name: Coveralls
-        run: coveralls
+        run: coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
