@@ -6,3 +6,5 @@ practice/
 .coverage
 dist/
 build/
+*.sublime-workspace
+*.sublime-project
