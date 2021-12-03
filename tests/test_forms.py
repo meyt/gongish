@@ -1,6 +1,8 @@
 import pytest
 import webtest
 
+from datetime import datetime, date, time
+
 from gongish import Application, HTTPBadRequest
 from gongish.request import RequestForm
 
@@ -76,15 +78,18 @@ def test_forms():
     )
 
     # Array field
-    assert RequestForm(
-        {
-            "REQUEST_METHOD": "GET",
-            "QUERY_STRING": "foo=bar&foo=baz",
-            "wsgi.input": "",
-        },
-        "application/x-www-form-urlencoded",
-        0,
-    ).foo == ["bar", "baz"]
+    assert (
+        RequestForm(
+            {
+                "REQUEST_METHOD": "GET",
+                "QUERY_STRING": "foo=bar&foo=baz",
+                "wsgi.input": "",
+            },
+            "application/x-www-form-urlencoded",
+            0,
+        ).foo
+        == ["bar", "baz"]
+    )
 
     # Form attribute existence
     assert (
@@ -99,3 +104,108 @@ def test_forms():
         ).bar
         is None
     )
+
+
+def make_form(v):
+    import urllib.parse
+
+    environ = {
+        "REQUEST_METHOD": "GET",
+        "wsgi.input": "",
+    }
+    if v is not None:
+        environ["QUERY_STRING"] = f"a={urllib.parse.quote_plus(v)}"
+
+    return RequestForm(environ, "application/x-www-form-urlencoded", None)
+
+
+def test_date_format():
+    form = make_form("2001-01-01")
+    assert form.get_date("a") == date(2001, 1, 1)
+
+    # check default
+    form = make_form(None)
+    assert form.get_date("a", None) is None
+
+    form = make_form(None)
+    assert form.get_date("a", "2001-01-01") == date(2001, 1, 1)
+
+    form = make_form(None)
+    assert form.get_date("a", date(2001, 1, 1)) == date(2001, 1, 1)
+
+    # iso date format
+    with pytest.raises(HTTPBadRequest, match=r"Invalid date format.*"):
+        make_form("01-01-01").get_date("a")
+
+    # none iso date format
+    with pytest.raises(HTTPBadRequest, match=r"Invalid date format.*"):
+        make_form("2001/01/01").get_date("a")
+
+
+def test_time_format():
+    form = make_form("08:08:08")
+    assert form.get_time("a") == time(8, 8, 8)
+
+    # check default
+    form = make_form(None)
+    assert form.get_time("a", None) is None
+
+    form = make_form(None)
+    assert form.get_time("a", "08:08:08") == time(8, 8, 8)
+
+    form = make_form(None)
+    assert form.get_time("a", time(8, 8, 8)) == time(8, 8, 8)
+
+    # none iso time format
+    with pytest.raises(HTTPBadRequest, match=r"Invalid time format.*"):
+        make_form("08-08-08").get_time("a")
+
+
+def test_datetime_format():
+    form = make_form("2017-10-10T10:10:00")
+    assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0)
+
+    form = make_form("2017-10-10T10:10:00.")
+    assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0)
+
+    # check default
+    form = make_form(None)
+    assert form.get_datetime("a", None) is None
+
+    form = make_form(None)
+    assert form.get_datetime("a", "2017-10-10T10:10:00") == datetime(
+        2017, 10, 10, 10, 10, 0
+    )
+
+    form = make_form(None)
+    assert form.get_datetime(
+        "a", datetime(2017, 10, 10, 10, 10, 0)
+    ) == datetime(2017, 10, 10, 10, 10, 0)
+
+    # Invalid month value
+    with pytest.raises(HTTPBadRequest, match=r"Invalid datetime format.*"):
+        make_form("2017-13-10T10:10:00").get_datetime("a")
+
+    # Invalid datetime format
+    with pytest.raises(HTTPBadRequest, match=r"Invalid datetime format.*"):
+        make_form("InvalidDatetime").get_datetime("a")
+
+    # Empty datetime
+    with pytest.raises(HTTPBadRequest, match=r"Invalid datetime format.*"):
+        make_form("").get_datetime("a")
+
+    # datetime might not have ending Z
+    form = make_form("2017-10-10T10:10:00.4546")
+    assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0, 4546)
+
+    # datetime containing ending Z
+    form = make_form("2017-10-10T10:10:00.4546Z")
+    assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0, 4546)
+
+    # datetime with timezone
+    form = make_form("2017-10-10T10:10:00.4546+03:00")
+    assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0, 4546)
+
+    # datetime without microsecond
+    form = make_form("2017-10-10T10:10:00+03:00")
+    assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0, 0)

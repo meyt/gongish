@@ -6,11 +6,18 @@ try:
 except ImportError:  # pragma: no cover
     import json
 
+from datetime import datetime, date, time
 from http import cookies
 from urllib.parse import parse_qs
 
 from gongish.helpers import HeaderSet, LazyAttribute
 from gongish.exceptions import HTTPBadRequest
+from gongish.constants import (
+    ISO_DATETIME_FORMAT,
+    ISO_DATE_FORMAT,
+    ISO_DATETIME_PATTERN,
+    ISO_TIME_FORMAT,
+)
 
 
 def getcgifieldvalue(field):
@@ -61,6 +68,69 @@ class RequestForm(dict):
             else:
                 self[k] = getcgifieldvalue(v)
 
+    def get_date(self, key, default=None):
+        if key in self:
+            v = self[key]
+
+        else:
+            if isinstance(default, date):
+                return default
+
+            v = default
+
+        if v is None:
+            return
+
+        try:
+            return datetime.strptime(v, ISO_DATE_FORMAT).date()
+        except ValueError:
+            raise HTTPBadRequest(f"Invalid date format `{key}`")
+
+    def get_time(self, key, default=None):
+        if key in self:
+            v = self[key]
+
+        else:
+            if isinstance(default, time):
+                return default
+
+            v = default
+
+        if v is None:
+            return
+
+        try:
+            return datetime.strptime(v, ISO_TIME_FORMAT).time()
+        except ValueError:
+            raise HTTPBadRequest(f"Invalid time format `{key}`")
+
+    def get_datetime(self, key, default=None):
+        if key in self:
+            v = self[key]
+
+        else:
+            if isinstance(default, datetime):
+                return default
+
+            v = default
+
+        if v is None:
+            return
+
+        match = ISO_DATETIME_PATTERN.match(v)
+        if not match:
+            raise HTTPBadRequest(f"Invalid datetime format `{key}`")
+
+        try:
+            v = datetime.strptime(match.group(1), ISO_DATETIME_FORMAT)
+            if match.group(2) and len(match.group(2)) > 0:
+                return v.replace(microsecond=int(match.group(2)))
+
+            return v
+
+        except ValueError:
+            raise HTTPBadRequest(f"Invalid datetime format `{key}`")
+
     def __getattr__(self, key):
         if key not in self:
             return None
@@ -81,7 +151,7 @@ class Request:
 
     @LazyAttribute
     def fullpath(self):
-        """ Request full URI (includes query string) """
+        """Request full URI (includes query string)"""
         return wsgiutil.request_uri(self.environ, include_query=True)
 
     @LazyAttribute
@@ -123,8 +193,7 @@ class Request:
 
     @LazyAttribute
     def scheme(self):
-        """Request Scheme (http|https)
-        """
+        """Request Scheme (http|https)"""
         return wsgiutil.guess_scheme(self.environ)
 
     @LazyAttribute
