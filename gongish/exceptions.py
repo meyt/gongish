@@ -38,7 +38,7 @@ class HTTPKnownStatus(HTTPStatus):
     def __init__(self, status_text=None):
         if status_text is not None:
             self.text = status_text
-        super().__init__()
+        super().__init__(status_text)
 
 
 class HTTPBadRequest(HTTPKnownStatus):
