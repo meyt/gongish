@@ -260,3 +260,22 @@ def test_stream():
     assert resp.headers["transfer-encoding"] == "chunked"
     assert "trailer" not in resp.headers
     assert resp.text == "5\r\nfirst\r\n18\r\nerror in streaming0\r\n\r\n"
+
+
+def test_multiple_verbs():
+    app = Application()
+
+    @app.route("/", verbs=("get", "post", "delete"))
+    def resource():
+        return f"The Root {app.request.verb}"
+
+    testapp = webtest.TestApp(app)
+    resp = testapp.get("/")
+    assert resp.text == "The Root get"
+    assert resp.status == "200 OK"
+
+    resp = testapp.post("/")
+    assert resp.text == "The Root post"
+    assert resp.status == "200 OK"
+
+    testapp.put("/", status=404)

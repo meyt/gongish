@@ -31,19 +31,19 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         self.wordrouter = WordRouter()
 
     def on_begin_request(self):
-        """ Hook """
+        """Hook"""
         pass
 
     def on_begin_response(self):
-        """ Hook """
+        """Hook"""
         pass
 
     def on_end_response(self):
-        """ Hook """
+        """Hook"""
         pass
 
     def on_error(self, exc: HTTPStatus):
-        """ Hook """
+        """Hook"""
         pass
 
     def __getattr__(self, key):
@@ -91,27 +91,28 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
         return decorator
 
-    def route(self, path, formatter=None, **kwargs):
-        def decorator(func):
-            funcname = func.__name__.lower()
+    def route(self, path, formatter=None, verbs=None, **kwargs):
+        def decorator(fn):
+            for verb in verbs if verbs else (fn.__name__,):
+                verb = verb.lower()
 
-            # Set formatter
-            func.__gongish_formatter__ = functools.partial(
-                formatter or self.__class__.__default_formatter__, **kwargs
-            )
+                # Set formatter
+                fn.__gongish_formatter__ = functools.partial(
+                    formatter or self.__class__.__default_formatter__, **kwargs
+                )
 
-            # Get parameters
-            func.__gongish_route_params__ = tuple(
-                [
-                    (param.name, param.annotation)
-                    for param in inspect.signature(func).parameters.values()
-                ]
-            )
+                # Get parameters
+                fn.__gongish_route_params__ = tuple(
+                    [
+                        (param.name, param.annotation)
+                        for param in inspect.signature(fn).parameters.values()
+                    ]
+                )
 
-            # Distribute
-            self.wordrouter.add(funcname + path, func)
-            self.paths.add(path)
-            self.verbs.add(funcname)
+                # Distribute
+                self.wordrouter.add(verb + path, fn)
+                self.paths.add(path)
+                self.verbs.add(verb)
 
         return decorator
 
@@ -163,7 +164,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         return handler, route_args
 
     def __call__(self, environ, start_response):
-        """ Application WSGI entry """
+        """Application WSGI entry"""
         self.request = request = self.__request_factory__(environ)
         self.response = response = self.__response_factory__(app=self)
         try:
