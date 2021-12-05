@@ -106,17 +106,41 @@ def test_forms():
     )
 
 
-def make_form(v):
+def make_form(v, is_json=False):
+    import io
+    import os
+    import json
     import urllib.parse
 
-    environ = {
-        "REQUEST_METHOD": "GET",
-        "wsgi.input": "",
-    }
-    if v is not None:
-        environ["QUERY_STRING"] = f"a={urllib.parse.quote_plus(v)}"
+    def get_streamlength(s):
 
-    return RequestForm(environ, "application/x-www-form-urlencoded", None)
+        s.seek(0, os.SEEK_END)
+        res = s.tell()
+        s.seek(0)
+        return res
+
+    if is_json:
+        fp = io.StringIO("")
+        v = {"a": v}
+        v = json.dump(v, fp)
+        clength = get_streamlength(fp)
+        environ = {
+            "REQUEST_METHOD": "POST",
+            "wsgi.input": fp,
+        }
+        ctype = "application/json"
+
+    else:
+        ctype = "application/x-www-form-urlencoded"
+        clength = None
+        environ = {
+            "REQUEST_METHOD": "GET",
+            "wsgi.input": "",
+        }
+        if v is not None:
+            environ["QUERY_STRING"] = f"a={urllib.parse.quote_plus(v)}"
+
+    return RequestForm(environ, ctype, clength)
 
 
 def test_date_format():
@@ -209,3 +233,35 @@ def test_datetime_format():
     # datetime without microsecond
     form = make_form("2017-10-10T10:10:00+03:00")
     assert form.get_datetime("a") == datetime(2017, 10, 10, 10, 10, 0, 0)
+
+
+def test_get_boolean():
+    form = make_form(None, is_json=True)
+    assert form.get_boolean("a") is None
+
+    form = make_form(True, is_json=True)
+    assert form.get_boolean("a") is True
+
+    form = make_form("True", is_json=True)
+    assert form.get_boolean("a") is True
+
+    form = make_form("True", is_json=False)
+    assert form.get_boolean("a") is True
+
+    form = make_form("TruE", is_json=False)
+    assert form.get_boolean("a") is True
+
+    form = make_form("true", is_json=False)
+    assert form.get_boolean("a") is True
+
+    form = make_form(False, is_json=True)
+    assert form.get_boolean("a") is False
+
+    form = make_form("False", is_json=True)
+    assert form.get_boolean("a") is False
+
+    form = make_form("False", is_json=False)
+    assert form.get_boolean("a") is False
+
+    form = make_form("FalsE", is_json=False)
+    assert form.get_boolean("a") is False

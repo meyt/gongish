@@ -86,6 +86,16 @@ class RequestForm(dict):
         except ValueError:
             raise HTTPBadRequest(f"Invalid date format `{key}`")
 
+    def get_boolean(self, key, default=None):
+        v = self.get(key, default)
+        if v is None:
+            return
+
+        if isinstance(v, bool):
+            return v
+
+        return v.lower() == "true"
+
     def get_time(self, key, default=None):
         if key in self:
             v = self[key]
