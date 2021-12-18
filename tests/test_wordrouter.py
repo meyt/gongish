@@ -39,3 +39,14 @@ def test_wordrouter():
     assert wt("get/user") == "all users"
     assert wt("get/user/1") is None
     assert wt("delete/user/1") == "delete user 1"
+
+
+def test_wordrouter2():
+    wt = WordRouter()
+    wt.add("get/user", lambda: "all users")
+    wt.add("get/user/me", lambda: "get my profile")
+    wt.add("get/user/:userId/book", lambda x: f"get user {x} books")
+    assert wt("get/user") == "all users"
+    assert wt("get/user/me") == "get my profile"
+    assert wt("get/user/12/book") == "get user 12 books"
+    assert wt("get/user/me/book") == "get user me books"
