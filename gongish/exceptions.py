@@ -81,6 +81,11 @@ class HTTPPreconditionFailed(HTTPKnownStatus):
     text = "Precondition Failed"
 
 
+class HTTPTooManyRequests(HTTPKnownStatus):
+    code = 429
+    text = "Too Many Requests"
+
+
 class HTTPRedirect(HTTPKnownStatus):
     """
     This is an abstract class for all redirects.
