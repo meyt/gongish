@@ -1,3 +1,5 @@
+import time
+import threading
 import pytest
 import webtest
 
@@ -279,3 +281,31 @@ def test_multiple_verbs():
     assert resp.status == "200 OK"
 
     testapp.put("/", status=404)
+
+
+def test_racing():
+    app = Application()
+
+    @app.route("/")
+    def get():
+        return f"Hello {app.request.query['username']}"
+
+    @app.route("/lazy-route")
+    def get():
+        time.sleep(1)
+        return f"Hello lazy {app.request.query['username']}"
+
+    testapp = webtest.TestApp(app)
+    lazy_resp = dict(text=None)
+
+    def do_lazyrequest():
+        lazy_resp["text"] = testapp.get("/lazy-route?username=bohlul").text
+
+    t = threading.Thread(target=do_lazyrequest)
+    t.start()
+
+    resp = testapp.get("/?username=javid")
+    assert resp.text == "Hello javid"
+
+    t.join()
+    assert lazy_resp["text"] == "Hello lazy bohlul"

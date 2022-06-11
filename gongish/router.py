@@ -24,11 +24,17 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     __route_argument_char__ = ":"
 
     def __init__(self):
-        self.request = None
-        self.response = None
         self.verbs = set()
         self.paths = set()
         self.wordrouter = WordRouter()
+
+    @property
+    def request(self):
+        return self.__class__._thread_local.request
+
+    @property
+    def response(self):
+        return self.__class__._thread_local.response
 
     def on_begin_request(self):
         """Hook"""
@@ -165,8 +171,12 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
     def __call__(self, environ, start_response):
         """Application WSGI entry"""
-        self.request = request = self.__request_factory__(environ)
-        self.response = response = self.__response_factory__(app=self)
+        cls = self.__class__
+        cls._thread_local.request = request = cls.__request_factory__(environ)
+        cls._thread_local.response = response = cls.__response_factory__(
+            app=self
+        )
+
         try:
             self.on_begin_request()  # hook
 
