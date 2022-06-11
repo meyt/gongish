@@ -8,7 +8,6 @@ try:
             indent = 0
         return jsonlib.dumps(v, indent=indent)
 
-
 except ImportError:  # pragma: no cover
     import json as jsonlib
 
@@ -34,4 +33,4 @@ class ResponseFormattersMixin:
         # Format in Binary
         response.type = "application/octet-stream"
 
-    __default_formatter__ = format_text
+    default_formatter = format_text

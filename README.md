@@ -158,7 +158,7 @@ the `text` formatter used as default, but you can change it:
 from gongish import Application
 
 class MyApp(Application):
-    __default_formatter__ = Application.format_json
+    default_formatter = Application.format_json
 
 app = MyApp()
 

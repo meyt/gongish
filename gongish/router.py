@@ -19,9 +19,9 @@ http_success = HTTPSuccess().status
 
 
 class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
-    __request_factory__ = Request
-    __response_factory__ = Response
-    __route_argument_char__ = ":"
+    request_factory = Request
+    response_factory = Response
+    _route_argument_char = ":"
 
     def __init__(self):
         self.verbs = set()
@@ -103,12 +103,12 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
                 verb = verb.lower()
 
                 # Set formatter
-                fn.__gongish_formatter__ = functools.partial(
-                    formatter or self.__class__.__default_formatter__, **kwargs
+                fn._gongish_formatter = functools.partial(
+                    formatter or self.__class__.default_formatter, **kwargs
                 )
 
                 # Get parameters
-                fn.__gongish_route_params__ = tuple(
+                fn._gongish_route_params = tuple(
                     [
                         (param.name, param.annotation)
                         for param in inspect.signature(fn).parameters.values()
@@ -130,7 +130,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         else:
             exc_ = HTTPInternalServerError()
             exc_info = sys.exc_info()
-            self.__logger__.exception(exc_.text, exc_info=True)
+            self._log.exception(exc_.text, exc_info=True)
 
         exc_.setup_response(app=self)
 
@@ -154,7 +154,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
             raise HTTPNotFound
 
         # Validate parameters
-        for idx, param in enumerate(handler.__gongish_route_params__):
+        for idx, param in enumerate(handler._gongish_route_params):
             name, annotation = param
 
             if annotation == inspect._empty:
@@ -172,10 +172,8 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     def __call__(self, environ, start_response):
         """Application WSGI entry"""
         cls = self.__class__
-        cls._thread_local.request = request = cls.__request_factory__(environ)
-        cls._thread_local.response = response = cls.__response_factory__(
-            app=self
-        )
+        cls._thread_local.request = request = cls.request_factory(environ)
+        cls._thread_local.response = response = cls.response_factory(app=self)
 
         try:
             self.on_begin_request()  # hook
@@ -186,7 +184,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
             response.status = http_success
 
             # Format response
-            handler.__gongish_formatter__(request, response)
+            handler._gongish_formatter(request, response)
 
             response.prepare_to_start()
 

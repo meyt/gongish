@@ -5,7 +5,7 @@ from gongish import Application
 
 def test_default_formatter():
     class MyApp(Application):
-        __default_formatter__ = Application.format_json
+        default_formatter = Application.format_json
 
     app = MyApp()
 
@@ -23,7 +23,7 @@ def test_default_formatter():
 
     @app.route("/str")
     def get():
-        return 'thestr'
+        return "thestr"
 
     testapp = webtest.TestApp(app)
 
@@ -38,12 +38,12 @@ def test_default_formatter():
     assert resp.json == 12
 
     resp = testapp.get("/str")
-    assert resp.json == 'thestr'
+    assert resp.json == "thestr"
 
 
 def test_text_formatter():
     class MyApp(Application):
-        __default_formatter__ = Application.format_text
+        default_formatter = Application.format_text
 
     app = MyApp()
 

@@ -6,8 +6,8 @@ from gongish.helpers import HeaderSet
 class HTTPStatus(Exception):
     code = None
     text = None
-    __keep_headers__ = False
-    __keep_body__ = True
+    _keep_headers = False
+    _keep_body = True
 
     def __init__(self, *args: object) -> None:
         self.headers = HeaderSet()
@@ -18,7 +18,7 @@ class HTTPStatus(Exception):
         return f"{self.code} {self.text}"
 
     def setup_response(self, app) -> str:
-        if not self.__class__.__keep_body__:
+        if not self.__class__._keep_body:
             app.response.body = None
             app.response.type = None
         else:
@@ -28,7 +28,7 @@ class HTTPStatus(Exception):
                 traceback.format_exc() if app.config.debug else self.status
             )
 
-        if self.__keep_headers__:
+        if self._keep_headers:
             app.response.headers.update(self.headers)
         else:
             app.response.headers = self.headers
@@ -99,19 +99,19 @@ class HTTPRedirect(HTTPKnownStatus):
 class HTTPMovedPermanently(HTTPRedirect):
     code = 301
     text = "Moved Permanently"
-    __keep_body__ = False
+    _keep_body = False
 
 
 class HTTPFound(HTTPRedirect):
     code = 302
     text = "Found"
-    __keep_body__ = False
+    _keep_body = False
 
 
 class HTTPNotModified(HTTPKnownStatus):
     code = 304
     text = "Not Modified"
-    __keep_body__ = False
+    _keep_body_ = False
 
 
 class HTTPInternalServerError(HTTPKnownStatus):
@@ -127,42 +127,42 @@ class HTTPBadGatewayError(HTTPKnownStatus):
 class HTTPSuccess(HTTPKnownStatus):
     code = 200
     text = "OK"
-    __keep_headers__ = True
+    _keep_headers = True
 
 
 class HTTPCreated(HTTPSuccess):
     code = 201
     text = "Created"
-    __keep_headers__ = True
+    _keep_headers = True
 
 
 class HTTPAccepted(HTTPSuccess):
     code = 202
     text = "Accepted"
-    __keep_headers__ = True
+    _keep_headers = True
 
 
 class HTTPNonAuthoritativeInformation(HTTPSuccess):
     code = 203
     text = "Non-Authoritative Information"
-    __keep_headers__ = True
+    _keep_headers = True
 
 
 class HTTPNoContent(HTTPSuccess):
     code = 204
     text = "No Content"
-    __keep_body__ = False
-    __keep_headers__ = True
+    _keep_body = False
+    _keep_headers = True
 
 
 class HTTPResetContent(HTTPSuccess):
     code = 205
     text = "Reset Content"
-    __keep_body__ = False
-    __keep_headers__ = True
+    _keep_body = False
+    _keep_headers = True
 
 
 class HTTPPartialContent(HTTPSuccess):
     code = 206
     text = "Partial Content"
-    __keep_headers__ = True
+    _keep_headers = True
