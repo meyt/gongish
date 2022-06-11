@@ -40,7 +40,7 @@ class RequestForm(dict):
                 super().__init__(json.load(fp))
                 return
 
-            except (ValueError, TypeError):
+            except (ValueError, AttributeError, TypeError):
                 raise HTTPBadRequest("Cannot parse the request")
 
         if "QUERY_STRING" not in environ:
