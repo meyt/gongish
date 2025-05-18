@@ -1,10 +1,10 @@
 import os
-
-from os.path import isdir, join, relpath, pardir, exists
-from time import strftime, gmtime
 from mimetypes import guess_type
-from .exceptions import HTTPNotFound, HTTPForbidden
+from os.path import exists, isdir, join, pardir, relpath
+from time import gmtime, strftime
+
 from .constants import HTTP_DATETIME_FORMAT
+from .exceptions import HTTPForbidden, HTTPNotFound
 
 
 class StaticHandlerMixin:

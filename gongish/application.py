@@ -1,8 +1,8 @@
 import logging
 import threading
 
-from gongish.router import RouterMixin
 from gongish.configuration import ConfigurationMixin
+from gongish.router import RouterMixin
 
 
 class Application(RouterMixin, ConfigurationMixin):

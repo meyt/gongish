@@ -2,9 +2,9 @@ import importlib
 from argparse import ArgumentParser
 from wsgiref.simple_server import make_server
 
-
 p = ArgumentParser(
-    prog="gongish serve", description="Serve a WSGI application"
+    prog="gongish serve",
+    description="Serve a WSGI application",
 )
 p.add_argument(
     "module",

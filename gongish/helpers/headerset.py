@@ -1,5 +1,8 @@
 from collections import OrderedDict
 
+content_environ = ("HTTP_CONTENT_TYPE", "HTTP_CONTENT_LENGTH")
+content_headers = ("CONTENT_TYPE", "CONTENT_LENGTH")
+
 
 class HeaderSet(OrderedDict):  # pragma: nocover
     def __init__(self, items=None):
@@ -47,14 +50,11 @@ class HeaderSet(OrderedDict):  # pragma: nocover
 
     def load_from_wsgi_environ(self, environ):
         for key, value in environ.items():
-            if key.startswith("HTTP_") and key not in (
-                "HTTP_CONTENT_TYPE",
-                "HTTP_CONTENT_LENGTH",
-            ):
+            if key.startswith("HTTP_") and key not in content_environ:
                 header_name = key[5:].replace("_", "-")
                 self[header_name] = value
 
-            elif key in ("CONTENT_TYPE", "CONTENT_LENGTH") and value:
+            elif key in content_headers and value:
                 header_name = key.replace("_", "-")
                 self[header_name] = value
 

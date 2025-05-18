@@ -1,19 +1,19 @@
-import sys
-import inspect
 import functools
+import inspect
+import sys
 
-from .request import Request
-from .response import Response
 from .exceptions import (
-    HTTPStatus,
-    HTTPSuccess,
-    HTTPNotFound,
     HTTPBadRequest,
     HTTPInternalServerError,
+    HTTPNotFound,
+    HTTPStatus,
+    HTTPSuccess,
 )
+from .helpers import WordRouter
+from .request import Request
+from .response import Response
 from .response_formatters import ResponseFormattersMixin
 from .static import StaticHandlerMixin
-from .helpers import WordRouter
 
 http_success = HTTPSuccess().status
 
