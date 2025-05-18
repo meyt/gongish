@@ -36,6 +36,17 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     def response(self):
         return self.__class__._thread_local.response
 
+    @classmethod
+    def _clear_context(cls):
+        del cls._thread_local.request
+        del cls._thread_local.response
+
+    @classmethod
+    def _create_context(cls, environ):
+        cls._thread_local.request = request = cls.request_factory(environ)
+        cls._thread_local.response = response = cls.response_factory()
+        return request, response
+
     def on_begin_request(self):
         """Hook"""
         pass
@@ -53,8 +64,11 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         pass
 
     def __getattr__(self, key):
-        formatter = super().__getattribute__(f"format_{key}")
-        return functools.partial(self.route, formatter=formatter)
+        try:
+            formatter = super().__getattribute__(f"format_{key}")
+            return functools.partial(self.route, formatter=formatter)
+        except AttributeError:
+            return super().__getattribute__(key)
 
     def chunked(self, trailer_field=None, trailer_value=None):
         """
@@ -139,10 +153,37 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         self.response.prepare_to_start()
 
         start_response(
-            exc_.status, list(self.response.headers.items()), exc_info
+            exc_.status,
+            list(self.response.headers.items()),
+            exc_info,
         )
 
-        return self.response.start()
+        return self._process_response()
+
+    def _process_streaming_response(self):
+        # encode if required
+        resp = self.response
+        if resp.charset and not isinstance(resp._firstchunk, bytes):
+            yield resp._firstchunk.encode(resp.charset)
+            for chunk in resp.body:
+                yield chunk.encode(resp.charset)
+
+        else:
+            yield resp._firstchunk
+            for chunk in resp.body:
+                yield chunk
+
+        self.on_end_response()  # hook
+        self._clear_context()
+
+    def _process_response(self):
+        if self.response._firstchunk is not None:
+            return self._process_streaming_response()
+
+        r = self.response.body
+        self.on_end_response()  # hook
+        self._clear_context()
+        return r
 
     def dispatch(self, path: str, verb: str):
         """
@@ -171,9 +212,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
     def __call__(self, environ, start_response):
         """Application WSGI entry"""
-        cls = self.__class__
-        cls._thread_local.request = request = cls.request_factory(environ)
-        cls._thread_local.response = response = cls.response_factory(app=self)
+        request, response = self._create_context(environ)
 
         try:
             self.on_begin_request()  # hook
@@ -200,5 +239,4 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
                 response.headers.add(*line.split(": ", 1))
 
         start_response(response.status, list(response.headers.items()))
-
-        return response.start()
+        return self._process_response()

@@ -1,10 +1,10 @@
 import types
+
 from .helpers import HeaderSet
 
 
 class Response:
-    def __init__(self, app):
-        self.app = app
+    def __init__(self):
         self.headers = HeaderSet()
         self.status = "200 OK"
         self.body = None
@@ -53,24 +53,3 @@ class Response:
                 else self.length
             )
             self.body = body
-
-    def startstream(self):
-        # encode if required
-        if self.charset and not isinstance(self._firstchunk, bytes):
-            yield self._firstchunk.encode(self.charset)
-            for chunk in self.body:
-                yield chunk.encode(self.charset)
-
-        else:
-            yield self._firstchunk
-            for chunk in self.body:
-                yield chunk
-
-        self.app.on_end_response()  # hook
-
-    def start(self):
-        if self._firstchunk is not None:
-            return self.startstream()
-
-        self.app.on_end_response()  # hook
-        return self.body
