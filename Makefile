@@ -3,6 +3,6 @@ install:
 	pip install -e .
 
 test:
-	venv/bin/py.test -vv --cov-report term-missing:skip-covered --cov=gongish
+	venv/bin/py.test -vv --cov-report term-missing:skip-covered --cov=gongish tests
 
 .PHONY: install test
