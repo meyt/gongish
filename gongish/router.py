@@ -27,6 +27,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
         self.verbs = set()
         self.paths = set()
         self.wordrouter = WordRouter()
+        self._clear_context()
 
     @property
     def request(self):
@@ -38,8 +39,8 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
     @classmethod
     def _clear_context(cls):
-        del cls._thread_local.request
-        del cls._thread_local.response
+        cls._thread_local.request = None
+        cls._thread_local.response = None
 
     @classmethod
     def _create_context(cls, environ):
@@ -68,7 +69,13 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
             formatter = super().__getattribute__(f"format_{key}")
             return functools.partial(self.route, formatter=formatter)
         except AttributeError:
-            return super().__getattribute__(key)
+            try:
+                return super().__getattribute__(key)
+            except AttributeError:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute "
+                    f"'format_{key}' or '{key}'"
+                )
 
     def chunked(self, trailer_field=None, trailer_value=None):
         """

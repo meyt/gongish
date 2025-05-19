@@ -1,3 +1,4 @@
+import pytest
 import webtest
 
 from gongish import Application
@@ -59,6 +60,10 @@ def test_text_formatter():
     def get():
         return
 
+    @app.text("/decorator")
+    def get():
+        return
+
     testapp = webtest.TestApp(app)
 
     resp = testapp.get("/")
@@ -68,3 +73,29 @@ def test_text_formatter():
     assert resp.body == b""
 
     testapp.get("/nonstr", status=500)
+
+    resp = testapp.get("/decorator")
+    assert resp.headers["content-type"] == "text/plain; charset=utf-8"
+    assert resp.body == b""
+
+
+def test_unknown_formatter():
+    class MyApp(Application):
+        default_formatter = Application.format_text
+
+    app = MyApp()
+
+    @app.route("/")
+    def get():
+        return "index"
+
+    with pytest.raises(AttributeError) as e:
+
+        @app.unknown("/unknown")
+        def get():
+            return "pass"
+
+    assert (
+        str(e.value)
+        == "'MyApp' object has no attribute 'format_unknown' or 'unknown'"
+    )

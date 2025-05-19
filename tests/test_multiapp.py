@@ -1,4 +1,3 @@
-import pytest
 import webtest
 
 from gongish import Application
@@ -15,10 +14,7 @@ def test_multiapp():
     resp = testapp1.get("/")
     assert resp.text == "The Root"
     assert resp.status == "200 OK"
-
-    with pytest.raises(AttributeError) as e:
-        assert app1.request
-    assert str(e.value) == "'_thread._local' object has no attribute 'request'"
+    assert app1.request is None
 
     app2 = Application()
 
@@ -26,7 +22,4 @@ def test_multiapp():
     def get():
         return "The Root"
 
-    with pytest.raises(AttributeError) as e:
-        assert app2.request
-
-    assert str(e.value) == "'_thread._local' object has no attribute 'request'"
+    assert app2.request is None
