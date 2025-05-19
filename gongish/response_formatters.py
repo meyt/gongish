@@ -1,7 +1,7 @@
 try:
     import ujson as jsonlib
 
-    def dump_json(v, indent):
+    def dump_json(v, indent):  # pragma: nocover
         # ujson 4.x patch
         # https://github.com/ultrajson/ultrajson/issues/317
         if indent is None:
