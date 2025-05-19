@@ -42,7 +42,7 @@ def test_default_formatter():
     assert resp.json == "thestr"
 
 
-def test_text_formatter():
+def test_text_formatters():
     class MyApp(Application):
         default_formatter = Application.format_text
 
@@ -64,6 +64,14 @@ def test_text_formatter():
     def get():
         return
 
+    @app.html("/html")
+    def get():
+        return "<html><body><h1>Hi!</h1></body></html>"
+
+    @app.xml("/xml")
+    def get():
+        return "<svg></svg>"
+
     testapp = webtest.TestApp(app)
 
     resp = testapp.get("/")
@@ -73,10 +81,17 @@ def test_text_formatter():
     assert resp.body == b""
 
     testapp.get("/nonstr", status=500)
-
     resp = testapp.get("/decorator")
     assert resp.headers["content-type"] == "text/plain; charset=utf-8"
     assert resp.body == b""
+
+    resp = testapp.get("/html")
+    assert resp.headers["content-type"] == "text/html; charset=utf-8"
+    assert resp.body == b"<html><body><h1>Hi!</h1></body></html>"
+
+    resp = testapp.get("/xml")
+    assert resp.headers["content-type"] == "application/xml; charset=utf-8"
+    assert resp.body == b"<svg></svg>"
 
 
 def test_unknown_formatter():
