@@ -4,11 +4,11 @@ from os.path import join
 import pytest
 import webtest
 
-from gongish import Application, HTTPNotFound, get_current_app
+from gongish import Application, HTTPNotFound, current_app
 
 
 def test_hooks():
-    assert get_current_app() is None  # must call as first test case
+    assert current_app() is None  # must call as first test case
 
     class MyApp(Application):
         request_begin_counter = 0

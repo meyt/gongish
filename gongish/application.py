@@ -1,5 +1,5 @@
 import logging
-import threading
+from contextvars import ContextVar
 
 from gongish.configuration import ConfigurationMixin
 from gongish.router import RouterMixin
@@ -7,22 +7,18 @@ from gongish.router import RouterMixin
 
 class Application(RouterMixin, ConfigurationMixin):
     _log = logging.getLogger("gongish")
-    _thread_local = threading.local()
+    _current_app_var = ContextVar("current_app", default=None)
 
     def __init__(self):
-        self.__class__._thread_local.current_app = self
         ConfigurationMixin.__init__(self)
         RouterMixin.__init__(self)
 
     def setup(self):  # pragma: nocover
-        self.__class__._thread_local.current_app = self
+        pass
 
     def shutdown(self):  # pragma: nocover
-        self.__class__._thread_local.current_app = None
+        pass
 
 
-def get_current_app():
-    if not hasattr(Application._thread_local, "current_app"):
-        return
-
-    return Application._thread_local.current_app
+def current_app():
+    return Application._current_app_var.get()

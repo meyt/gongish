@@ -1,6 +1,7 @@
 import functools
 import inspect
 import sys
+from contextvars import ContextVar
 
 from .exceptions import (
     HTTPBadRequest,
@@ -22,6 +23,8 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
     request_factory = Request
     response_factory = Response
     _route_argument_char = ":"
+    _request_var = ContextVar("request", default=None)
+    _response_var = ContextVar("response", default=None)
 
     def __init__(self):
         self.verbs = set()
@@ -31,21 +34,24 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
     @property
     def request(self):
-        return self.__class__._thread_local.request
+        return self.__class__._request_var.get()
 
     @property
     def response(self):
-        return self.__class__._thread_local.response
+        return self.__class__._response_var.get()
 
     @classmethod
     def _clear_context(cls):
-        cls._thread_local.request = None
-        cls._thread_local.response = None
+        cls._request_var.set(None)
+        cls._response_var.set(None)
+        cls._current_app_var.set(None)
 
     @classmethod
     def _create_context(cls, environ):
-        cls._thread_local.request = request = cls.request_factory(environ)
-        cls._thread_local.response = response = cls.response_factory()
+        request = cls.request_factory(environ)
+        response = cls.response_factory()
+        cls._request_var.set(request)
+        cls._response_var.set(response)
         return request, response
 
     def on_begin_request(self):
@@ -219,6 +225,7 @@ class RouterMixin(StaticHandlerMixin, ResponseFormattersMixin):
 
     def __call__(self, environ, start_response):
         """Application WSGI entry"""
+        self.__class__._current_app_var.set(self)
         request, response = self._create_context(environ)
 
         try:
