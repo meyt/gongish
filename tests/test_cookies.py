@@ -1,6 +1,6 @@
-import webtest
-
 from http import cookies
+
+import webtest
 
 from gongish import Application
 
@@ -31,3 +31,5 @@ def test_simple_route():
     assert counter["path"] == "/a"
     assert counter["domain"] == "example.com"
     assert counter["max-age"] == "1"
+
+    app.shutdown()

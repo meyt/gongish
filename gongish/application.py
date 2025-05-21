@@ -10,11 +10,19 @@ class Application(RouterMixin, ConfigurationMixin):
     _thread_local = threading.local()
 
     def __init__(self):
+        self.__class__._thread_local.current_app = self
         ConfigurationMixin.__init__(self)
         RouterMixin.__init__(self)
 
     def setup(self):  # pragma: nocover
-        raise NotImplementedError
+        pass
 
     def shutdown(self):  # pragma: nocover
-        raise NotImplementedError
+        self.__class__._thread_local.current_app = None
+
+
+def get_current_app():
+    if not hasattr(Application._thread_local, "current_app"):
+        return
+
+    return Application._thread_local.current_app

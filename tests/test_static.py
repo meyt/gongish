@@ -49,3 +49,5 @@ def test_static(stuff_dir):
     testapp.get("/public/static-subdir", status=404)
     testapp.get("/public/../conftest.py", status=403)
     testapp.get("/public/../../setup.py", status=403)
+
+    app.shutdown()

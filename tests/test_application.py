@@ -1,12 +1,15 @@
+import tempfile
+from os.path import join
+
 import pytest
 import webtest
-import tempfile
 
-from os.path import join
-from gongish import Application, HTTPNotFound
+from gongish import Application, HTTPNotFound, get_current_app
 
 
 def test_hooks():
+    assert get_current_app() is None  # must call as first test case
+
     class MyApp(Application):
         request_begin_counter = 0
         response_begin_counter = 0
@@ -105,8 +108,11 @@ def test_hooks():
     with pytest.raises(ValueError):
         testapp.get("/tom", headers={"x-brokenres": "1"})
 
+    app.shutdown()
+
 
 def test_configuration():
+
     app = Application()
     config = """
     debug: False
@@ -120,3 +126,5 @@ def test_configuration():
 
     app.configure(config_filename)
     assert app.config.site_url == "http://localhost"
+
+    app.shutdown()

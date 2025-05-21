@@ -1,5 +1,6 @@
-import time
 import threading
+import time
+
 import pytest
 import webtest
 
@@ -309,3 +310,5 @@ def test_racing():
 
     t.join()
     assert lazy_resp["text"] == "Hello lazy bohlul"
+
+    app.shutdown()

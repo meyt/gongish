@@ -1,5 +1,5 @@
 # flake8: noqa
-from .application import Application
+from .application import Application, get_current_app
 from .exceptions import (
     HTTPAccepted,
     HTTPBadGatewayError,

@@ -2,12 +2,12 @@ import webtest
 
 from gongish import (
     Application,
-    HTTPKnownStatus,
     HTTPFound,
+    HTTPInternalServerError,
+    HTTPKnownStatus,
     HTTPMovedPermanently,
     HTTPNoContent,
     HTTPNotFound,
-    HTTPInternalServerError,
 )
 
 
@@ -63,9 +63,10 @@ def test_http_status():
     resp = testapp.post("/user", status=InvalidEmail.code)
     assert resp.status == "700 Invalid Email"
 
+    app.shutdown()
+
 
 def test_exception_on_production():
-
     app = Application()
     app.config.debug = False
 
@@ -98,3 +99,5 @@ def test_exception_on_production():
     assert resp.status == "204 im empty"
     assert resp.body == b""
     assert "content-type" not in resp.headers
+
+    app.shutdown()

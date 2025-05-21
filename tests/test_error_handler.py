@@ -4,7 +4,6 @@ from gongish import Application
 
 
 def test_error_handler():
-
     app = Application()
 
     @app.route("/user")
@@ -24,6 +23,8 @@ def test_error_handler():
 
     resp = testapp.delete("/user/kebab", status=400)
     assert resp.status == "400 Invalid Parameter `userid`"
+
+    app.shutdown()
 
     # Custom error handler
     class AnotherApp(Application):
@@ -46,3 +47,5 @@ def test_error_handler():
     resp = testapp.get("/", status=404)
     assert "traceback" in resp.json.keys()
     assert resp.status == "404 Not Found"
+
+    app.shutdown()

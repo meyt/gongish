@@ -93,6 +93,8 @@ def test_text_formatters():
     assert resp.headers["content-type"] == "application/xml; charset=utf-8"
     assert resp.body == b"<svg></svg>"
 
+    app.shutdown()
+
 
 def test_unknown_formatter():
     class MyApp(Application):
@@ -114,3 +116,5 @@ def test_unknown_formatter():
         str(e.value)
         == "'MyApp' object has no attribute 'format_unknown' or 'unknown'"
     )
+
+    app.shutdown()

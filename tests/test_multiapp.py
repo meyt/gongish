@@ -1,9 +1,11 @@
 import webtest
 
-from gongish import Application
+from gongish import Application, get_current_app
 
 
 def test_multiapp():
+    assert get_current_app() is None
+
     app1 = Application()
 
     @app1.route("/")
@@ -15,6 +17,7 @@ def test_multiapp():
     assert resp.text == "The Root"
     assert resp.status == "200 OK"
     assert app1.request is None
+    assert get_current_app() is app1
 
     app2 = Application()
 
@@ -23,3 +26,4 @@ def test_multiapp():
         return "The Root"
 
     assert app2.request is None
+    assert get_current_app() is app2

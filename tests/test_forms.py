@@ -1,14 +1,13 @@
+from datetime import date, datetime, time
+
 import pytest
 import webtest
-
-from datetime import datetime, date, time
 
 from gongish import Application, HTTPBadRequest
 from gongish.request import RequestForm
 
 
 def test_forms():
-
     app = Application()
 
     @app.json("/user")
@@ -78,18 +77,15 @@ def test_forms():
     )
 
     # Array field
-    assert (
-        RequestForm(
-            {
-                "REQUEST_METHOD": "GET",
-                "QUERY_STRING": "foo=bar&foo=baz",
-                "wsgi.input": "",
-            },
-            "application/x-www-form-urlencoded",
-            0,
-        ).foo
-        == ["bar", "baz"]
-    )
+    assert RequestForm(
+        {
+            "REQUEST_METHOD": "GET",
+            "QUERY_STRING": "foo=bar&foo=baz",
+            "wsgi.input": "",
+        },
+        "application/x-www-form-urlencoded",
+        0,
+    ).foo == ["bar", "baz"]
 
     # Form attribute existence
     assert (
@@ -105,11 +101,13 @@ def test_forms():
         is None
     )
 
+    app.shutdown()
+
 
 def make_form(v, is_json=False):
     import io
-    import os
     import json
+    import os
     import urllib.parse
 
     def get_streamlength(s):
