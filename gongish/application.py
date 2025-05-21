@@ -15,7 +15,7 @@ class Application(RouterMixin, ConfigurationMixin):
         RouterMixin.__init__(self)
 
     def setup(self):  # pragma: nocover
-        pass
+        self.__class__._thread_local.current_app = self
 
     def shutdown(self):  # pragma: nocover
         self.__class__._thread_local.current_app = None
